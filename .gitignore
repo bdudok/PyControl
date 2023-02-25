@@ -1,3 +1,6 @@
 __pycache__/
 unversioned/
-.idea//*
+.idea
+.idea/
+.idea/*
+ErrorLog.txt
