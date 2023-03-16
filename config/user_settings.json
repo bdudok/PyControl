@@ -1,0 +1,16 @@
+{
+    "folders": {
+        "tasks": "/Users/u247640/Code/pyControl/tasks",
+        "data": "/Users/u247640/Code/pyControl/data"
+    },
+    "plotting": {
+        "update_interval": 10,
+        "event_history_len": 200,
+        "state_history_len": 100,
+        "analog_history_dur": 60
+    },
+    "GUI": {
+        "ui_font_size": 11,
+        "log_font_size": 9
+    }
+}

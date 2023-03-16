@@ -4,26 +4,25 @@
 
 from pyControl.utility import *
 from devices import *
-from devices.breakout_1_2 import Breakout_1_2
-from devices.rotary_encoder import Rotary_encoder
-from hardware_definitions.test_hardware_definition import rotary
 
-# Variables.
 
-v.run_time = 10*second      # Time subject must run to obtain reward.
-v.stop_time = 5*second      # Time subject must stop running to intiate the next trial.
+v.run_time = 1*second      # Time subject must run to obtain reward.
+v.stop_time = 2*second      # Time subject must stop running to intiate the next trial.
 v.reward_duration = 100*ms  # Time reward solenoid is open for.
-v.velocity_threshold = 100  # Minimum encoder velocity treated as running (encoder counts/second).
+v.velocity_threshold = 10  # Minimum encoder velocity treated as running (encoder counts/second).
 
-# Instantiate hardware - would normally be in a seperate hardware definition file.
 
 board = Breakout_1_2() # Breakout board.
 
-# Running wheel must be plugged into port 1 of breakout board.
-running_wheel = Rotary_encoder(name='running_wheel', sampling_rate=100, output='velocity', threshold=v.velocity_threshold,
-                               rising_event='started_running', falling_event='stopped_running')
+# Instantiate hardware - would normally be in a seperate hardware definition file.
 
-solenoid = Digital_output(board.port_2.POW_A) # Reward delivery solenoid.
+# Running wheel must be plugged into port 1 of breakout board.
+running_wheel = Rotary_encoder(name='pos', sampling_rate=15, output='position', threshold=1, )
+
+lick_port = Lickometer(board.port_2)
+
+
+solenoid = lick_port.SOL_1 # Reward delivery solenoid.
 
 # States and events.
 
@@ -36,9 +35,13 @@ events = ['started_running',
           'stopped_running',
           'run_timer',
           'stopped_timer',
-          'reward_timer']
+          'reward_timer',
+          'lick_1', 'lick_1_off','lick_2', 'lick_2_off']
 
 initial_state = 'trial_start'
+
+
+
 
 # Run start behaviour.
 
@@ -70,9 +73,10 @@ def reward(event):
     # Deliver reward then go to inter trial interval.
     if event == 'entry':
         timed_goto_state('inter_trial_interval',v.reward_duration)
-        solenoid.on()
+        # solenoid.on()
     elif event == 'exit':
-        solenoid.off()
+        pass
+        # solenoid.off()
 
 def inter_trial_interval(event):
     # Go to trial start after subject stops running for stop_time seconds.
