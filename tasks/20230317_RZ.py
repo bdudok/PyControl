@@ -23,29 +23,30 @@ board = Breakout_1_2() # Breakout board.
 # Instantiate hardware - would normally be in a seperate hardware definition file.
 
 # Running wheel must be plugged into port 1 of breakout board.
-belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', threshold=1,)
-                          # rising_event='started_running',
-                          # falling_event='stopped_running')
+belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', threshold=100,
+                          rising_event='started_running',
+                          falling_event='stopped_running')
 
 lick_port = Lickometer(board.port_2, debounce=20)
 
-analog_input = Analog_input(pin=board.DAC_1, name='DAC1', sampling_rate=1000)
+# analog_input = Analog_input(pin=board.DAC_1, name='DAC1', sampling_rate=1000)
 
 
 solenoid = lick_port.SOL_1 # Reward delivery solenoid.
 
 # States and events.
 
-states = [
-          'searching', 'reward_zone', 'reward', #RZ behavior
+states = [ 'trial_start',
+          'searching', 'reward_zone_entry', 'reward_zone', 'reward',#RZ behavior
           ]
           
 events = [
           'lick_1',
-    'poll_delay'
+    'poll_timer', 'reward_timer',
+ 'started_running', 'stopped_running'
 ]
 
-initial_state = 'searching'
+initial_state = 'trial_start'
 
 
 #functions used by states
@@ -60,31 +61,39 @@ def get_abs_pos():
 
 def set_reward():
     v.next_reward = belt_pos.position + v.reward_zone_distance
+    set_timer('poll_timer', v.poll_resolution, output_event=True)
 
 def run_start():
     belt_pos.record() # Start streaming wheel velocity to computer.
 
 # State behaviour functions.
+def trial_start(event):
+    timed_goto_state('searching', 1*second)
 
 def searching(event):
     if event == 'entry':
         set_reward()
         v.lick_count___ = 0
-    elif event != 'exit':
+    elif event == 'poll_timer':
         if belt_pos.position > v.next_reward:
-            goto_state('reward_zone')
-    # elif event == 'poll_delay':
-    #     if belt_pos.position > v.next_reward___:
-    #         goto_state('reward_zone')
-    # #this works, but generates events that are logged. should be done by the rotary generating events.
-    # set_timer('poll_delay', v.poll_resolution, output_event=True)
+            goto_state('reward_zone_entry')
+        set_timer('poll_timer', v.poll_resolution, output_event=True)
 
-def reward_zone(event):
-    if event == 'entry' and v.lick_count___ == 0:
-        timed_goto_state('searching', v.reward_zone_open)
+def reward_zone_entry(event):
+    if event == 'entry':
+        v.lick_count___ == 0
+        set_timer('reward_timer', v.reward_zone_open)
+        disarm_timer('poll_timer')
     elif event == 'lick_1':
         goto_state('reward')
+    elif event == 'reward_timer':
+        goto_state('searching')
 
+def reward_zone(event):
+    if event == 'lick_1':
+        goto_state('reward')
+    elif event == 'reward_timer':
+        goto_state('searching')
 
 def reward(event):
     # Deliver reward then go to inter trial interval.
@@ -95,3 +104,5 @@ def reward(event):
         v.total_licks += 1
     elif event == 'exit':
         solenoid.off()
+    elif event == 'reward_timer':
+        goto_state('searching')
