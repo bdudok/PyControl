@@ -30,8 +30,9 @@ belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', thres
 
 lick_port = Lickometer(board.port_2, debounce=20)
 
-# analog_input = Analog_input(pin=board.DAC_1, name='DAC1', sampling_rate=1000)
-
+# lap_reset_tag_cp = Digital_input(board.port_3.DIO_A, rising_event='RFID_CP', falling_event=None, debounce=5, pull='down')
+# cp has no signal, use TIR pin instead
+lap_reset_tag = Digital_input(board.port_3.DIO_B, rising_event='RFID_TIR', falling_event=None, debounce=5, pull='down')
 
 solenoid = lick_port.SOL_1 # Reward delivery solenoid.
 
@@ -42,9 +43,10 @@ states = [ 'trial_start',
           ]
           
 events = [
-          'lick_1',
-    'poll_timer', 'reward_timer',
- 'started_running', 'stopped_running', 'lap_reset'
+          'lick_1', #lick port
+    'RFID_TIR', #RFID tag in range
+    'poll_timer', 'reward_timer', #internal timers
+ 'started_running', 'stopped_running', #utility
 ]
 
 initial_state = 'trial_start'
@@ -99,7 +101,7 @@ def trial_start(event):
     timed_goto_state('searching', 1*second)
 
 def all_states(event):
-    if event == 'lap_reset': #called by the lap reset sensor
+    if event == 'RFID_TIR': #called by the lap reset sensor
         lap_reset()
 
 def searching(event):
