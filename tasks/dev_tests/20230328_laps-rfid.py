@@ -5,12 +5,12 @@ from devices import *
 import gc
 
 
-v.reward_zone_distance = 200 #distance between zones
+v.reward_zone_distance = 5000 #distance between zones
 v.reward_zone_open = 5*second #reward availability after RZ entry
-v.reward_zone_length = 200
+v.reward_zone_length = 1000
 v.reward_duration = 100*ms  # Time reward solenoid is open for.
 v.poll_resolution = 1000*ms # Time to push events to the search state - mouse can't find new reward zone between polls
-v.force_lap_reset = 2000 #lap reset triggered if not reset tag
+v.force_lap_reset = 200000 #lap reset triggered if not reset tag
 
 #init attributes for use within states:
 v.next_reward = 200 #this always adds a next reward in a random distance
@@ -61,6 +61,7 @@ def lap_reset(force=False):
     or when the lap reset tag is activated
     Should work from any state, should not change state
     '''
+    disarm_timer('poll_timer')
     v.lap_counter += 1
     print_variables(['lap_counter', ])
     if force:
@@ -136,7 +137,8 @@ def reward_zone(event):
         goto_state('reward')
     elif event == 'reward_timer':
         goto_state('searching')
-    else:
+    # find another way to check for RZ distance limit, as this results in goto during entry of this. mybe movr check into lick.
+    elif event not in ('entry', 'exit'):
         p = get_abs_pos()
         if p < v.next_reward or p > v.next_reward + v.reward_zone_length:
             disarm_timer('reward_timer')
