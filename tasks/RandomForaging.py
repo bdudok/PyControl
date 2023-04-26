@@ -12,6 +12,8 @@ v.reward_zone_length = 1000
 v.reward_duration = 100*ms  # Time reward solenoid is open for.
 v.poll_resolution = 1000*ms # Time to push events to the search state - mouse can't find new reward zone between polls
 v.force_lap_reset = 200000 #lap reset triggered if not reset tag
+v.manual_valve_open = 1*second
+
 
 #init attributes for use within states:
 v.next_reward = 200 #this always adds a next reward in a random distance
