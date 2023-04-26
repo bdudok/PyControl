@@ -164,3 +164,6 @@ def run():
     sm.stop()
     while data_output_queue.available:
         output_data(data_output_queue.get())
+
+# def ev_put(e):
+#     event_queue.put((timestamp, event_typ, self.rising_event_ID))
