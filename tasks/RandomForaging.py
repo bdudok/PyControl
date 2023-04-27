@@ -113,6 +113,10 @@ def trial_start(event):
 def all_states(event):
     if event == 'RFID_TIR': #called by the lap reset sensor
         lap_reset()
+    elif event == 'sol_on':
+        solenoid.on()
+    elif event == 'sol_off':
+        solenoid.off()
 
 def searching(event):
     '''
@@ -180,3 +184,8 @@ def reward(event):
         v.total_licks += 1
     elif event == 'exit':
         solenoid.off()
+
+#Gui functions
+def give_manual_reward():
+    # put reward dispense code here
+    goto_state('reward')

@@ -88,6 +88,7 @@ def output_data(event):
 
 def recieve_data():
     # Read and process data from computer.
+
     global running
     new_byte = usb_serial.read(1)
     if new_byte == b'\x03': # Serial command to stop run.
@@ -114,6 +115,10 @@ def recieve_data():
             return  # Bad checksum.
         elif data[-1:] == b'r':
             sm.user_task_file.give_manual_reward()
+        elif data[-1:] == b'o':
+            sm.user_task_file.open_for_t()
+        elif data[-1:] == b't':
+            sm.user_task_file.toggle_valve()
 
 
 
