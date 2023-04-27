@@ -4,3 +4,4 @@ unversioned/
 .idea/
 .idea/*
 ErrorLog.txt
+config/user_settings.json
