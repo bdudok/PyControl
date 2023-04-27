@@ -5,18 +5,19 @@ from pyControl.utility import *
 from devices import *
 import gc
 
+cm = 41.5
 
-v.reward_zone_distance = 5000 #distance between zones
+v.reward_zone_distance = int(50 * cm) #distance between zones
 v.reward_zone_open = 5*second #reward availability after RZ entry
-v.reward_zone_length = 1000
+v.reward_zone_length = int(10 * cm)
 v.reward_duration = 100*ms  # Time reward solenoid is open for.
 v.poll_resolution = 1000*ms # Time to push events to the search state - mouse can't find new reward zone between polls
-v.force_lap_reset = 200000 #lap reset triggered if not reset tag
+v.force_lap_reset = int(220 * cm) #lap reset triggered if not reset tag
 v.manual_valve_open = 1*second
 
 
 #init attributes for use within states:
-v.next_reward = 200 #this always adds a next reward in a random distance
+v.next_reward = 0 #starting reward zone
 v.lap_counter = 0
 v.lick_count___ = 0
 v.last_lap_end = 0 #position at the end of last lap
@@ -164,8 +165,3 @@ def reward(event):
     #need to repeat listening for timeout event, so it's not missed by reward_zone.
     elif event == 'reward_timer':
         goto_state('searching')
-
-#Gui functions
-def give_manual_reward():
-    # put reward dispense code here
-    print("This function was called from the GUI")
