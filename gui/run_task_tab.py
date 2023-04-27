@@ -116,23 +116,6 @@ class Run_task_tab(QtWidgets.QWidget):
 
         self.upload_button.clicked.connect(self.setup_task)
 
-        #Remote groubox
-        self.remote_groupbox = QtWidgets.QGroupBox("Remote")
-        # add 3 buttons:
-        # a button that executes a reward
-        # a button that opens the valve for the time in v.manual_valve_open
-        # and a toggle
-        self.man_rew_button = QtWidgets.QPushButton("Reward")
-        self.man_open_button = QtWidgets.QPushButton("Open for t")
-        self.man_toggle_button = QtWidgets.QPushButton("Toggle")
-        self.remotegroup_layout = QtWidgets.QHBoxLayout()
-        self.remotegroup_layout.addWidget(self.man_rew_button)
-        self.remotegroup_layout.addWidget(self.man_open_button)
-        self.remotegroup_layout.addWidget(self.man_toggle_button)
-        self.remote_groupbox.setLayout(self.remotegroup_layout)
-
-        self.man_rew_button.clicked.connect(self.man_reward)
-
         # Session groupbox.
 
         self.session_groupbox = QtWidgets.QGroupBox("Session")
@@ -172,18 +155,15 @@ class Run_task_tab(QtWidgets.QWidget):
         self.vertical_layout = QtWidgets.QVBoxLayout()
         self.horizontal_layout_1 = QtWidgets.QHBoxLayout()
         self.horizontal_layout_2 = QtWidgets.QHBoxLayout()
-        self.horizontal_layout_2b = QtWidgets.QHBoxLayout()
         self.horizontal_layout_3 = QtWidgets.QHBoxLayout()
 
         self.horizontal_layout_1.addWidget(self.status_groupbox)
         self.horizontal_layout_1.addWidget(self.board_groupbox)
         self.horizontal_layout_2.addWidget(self.task_groupbox)
         self.horizontal_layout_2.addWidget(self.file_groupbox)
-        self.horizontal_layout_2b.addWidget(self.remote_groupbox)
         self.horizontal_layout_3.addWidget(self.session_groupbox)
         self.vertical_layout.addLayout(self.horizontal_layout_1)
         self.vertical_layout.addLayout(self.horizontal_layout_2)
-        self.vertical_layout.addLayout(self.horizontal_layout_2b)
         self.vertical_layout.addLayout(self.horizontal_layout_3)
         self.vertical_layout.addWidget(self.log_textbox, 20)
         self.vertical_layout.addWidget(self.task_plot, 80)
@@ -209,17 +189,6 @@ class Run_task_tab(QtWidgets.QWidget):
         self.disconnect()  # Set initial state as disconnected.
 
     # General methods
-
-    #custom buttons
-    def man_reward(self):
-        if self.board.framework_running:
-            self.board.send_reward_msg_to_pyboard()
-
-    def man_open(self):
-        man_open(self)
-
-    def man_toggle(self):
-        man_toggle(self)
 
     def print_to_log(self, print_string, end="\n"):
         self.log_textbox.moveCursor(QtGui.QTextCursor.MoveOperation.End)
