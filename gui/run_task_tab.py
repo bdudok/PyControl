@@ -212,8 +212,10 @@ class Run_task_tab(QtWidgets.QWidget):
 
     #custom buttons
     def man_reward(self):
+        print('Callback reached')
         if self.board.framework_running:
             self.board.send_reward_msg_to_pyboard()
+            print('Message sent')
 
     def man_open(self):
         man_open(self)
