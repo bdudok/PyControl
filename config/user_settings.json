@@ -1,7 +1,7 @@
 {
     "folders": {
-        "tasks": "/Users/u247640/Code/pyControl/tasks",
-        "data": "/Users/u247640/Code/pyControl/data"
+        "tasks": "C:\\Users\\Treadmill\\PycharmProjects\\PyControl\\tasks",
+        "data": "\\Users\\u247640\\Code\\pyControl\\data"
     },
     "plotting": {
         "update_interval": 10,
