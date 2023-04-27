@@ -522,3 +522,15 @@ class Pycboard(Pyboard):
             self.serial.write(b'V' + data_len +  data + checksum)
         else: # Get variable using REPL.
             return eval(self.eval(f'sm.get_variable({repr(v_name)})').decode())
+
+    def send_serial_data(self, header_char, sub_char, data=None):
+        encoded_data = repr(data).encode() + sub_char.encode()
+        data_len = len(encoded_data).to_bytes(2, 'little')
+        checksum = sum(encoded_data).to_bytes(2, 'little')
+        self.serial.write(header_char.encode() + data_len + encoded_data + checksum)
+        return None
+
+    def send_reward_msg_to_pyboard(self):
+        if self.framework_running:
+            self.send_serial_data('G', 'r')
+            return None

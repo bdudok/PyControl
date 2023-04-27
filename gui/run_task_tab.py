@@ -119,7 +119,7 @@ class Run_task_tab(QtWidgets.QWidget):
 
         #Remote groubox
         self.remote_groupbox = QtWidgets.QGroupBox("Remote")
-        #TODO add 3 buttons:
+        # add 3 buttons:
         # a button that executes a reward
         # a button that opens the valve for the time in v.manual_valve_open
         # and a toggle

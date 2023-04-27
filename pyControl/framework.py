@@ -106,6 +106,16 @@ def recieve_data():
             v_name = data[:-1].decode()
             v_str = sm.get_variable(v_name)
             data_output_queue.put((current_time, varbl_typ, (v_name, v_str)))
+    elif new_byte == b'G': # Command from GUI
+        data_len = int.from_bytes(usb_serial.read(2), 'little')
+        data = usb_serial.read(data_len)
+        checksum = int.from_bytes(usb_serial.read(2), 'little')
+        if not checksum == (sum(data) & 0xFFFF):
+            return  # Bad checksum.
+        elif data[-1:] == b'r':
+            sm.user_task_file.give_manual_reward()
+
+
 
 def run():
     # Run framework for specified number of seconds.

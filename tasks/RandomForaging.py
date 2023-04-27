@@ -164,3 +164,8 @@ def reward(event):
     #need to repeat listening for timeout event, so it's not missed by reward_zone.
     elif event == 'reward_timer':
         goto_state('searching')
+
+#Gui functions
+def give_manual_reward():
+    # put reward dispense code here
+    print("This function was called from the GUI")
