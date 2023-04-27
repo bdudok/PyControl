@@ -5,20 +5,26 @@ from pyControl.utility import *
 from devices import *
 import gc
 
+cm = 41.5
 
-v.reward_zone_distance = 5000 #distance between zones
+v.reward_zone_distance = int(50 * cm) #distance between zones
 v.reward_zone_open = 5*second #reward availability after RZ entry
-v.reward_zone_length = 1000
+v.reward_zone_length = int(10 * cm)
 v.reward_duration = 100*ms  # Time reward solenoid is open for.
 v.poll_resolution = 1000*ms # Time to push events to the search state - mouse can't find new reward zone between polls
-v.force_lap_reset = 200000 #lap reset triggered if not reset tag
+v.force_lap_reset = int(220 * cm) #lap reset triggered if not reset tag
 v.manual_valve_open = 1*second
+v.max_lick_per_zone = 10
+v.verbose=1
+
 
 
 #init attributes for use within states:
-v.next_reward = 200 #this always adds a next reward in a random distance
+v.next_reward = 0 #starting reward zone
 v.lap_counter = 0
 v.lick_count___ = 0
+v.reward_zone_entry_time___ = 0
+v.reward_zone_lapsed___ = False
 v.last_lap_end = 0 #position at the end of last lap
 v.total_licks = 0
 
@@ -59,45 +65,42 @@ initial_state = 'trial_start'
 
 def lap_reset(force=False):
     '''
-    This is called when either:
-    force == True: the abs pos reaches a threshold set in v.force_lap reset,
+    This is called when either the abs pos reaches a threshold set in v.force_lap reset,
     or when the lap reset tag is activated
     Should work from any state, should not change state
     '''
-    disarm_timer('poll_timer')
+    # disarm_timer('poll_timer')
     v.lap_counter += 1
     print_variables(['lap_counter', ])
-    if force:
-        #time has passed since the pos was reached, start from that
-        v.last_lap_end += v.force_lap_reset
-    else:
-        #if called by lap reset tag
-        v.last_lap_end = get_abs_pos()
-    #refresh reward zones
-    set_reward()
+    v.last_lap_end = belt_pos.position
+    #refresh reward zones - not for RF as rewards are in abs_pos
+    # set_reward()
 
-def get_abs_pos():
-    '''
-    return absolute belt position
-    assumes that the rotary position counter never overflows
-    this is also the mechanism to check for force reset - any time this is called.
-    Should work from any state, should not change state
-    '''
-    curr_pos = belt_pos.position - v.last_lap_end
-    if curr_pos > v.force_lap_reset:
-        lap_reset(force=True)
-        get_abs_pos()
-    return curr_pos
 
-def get_gauss_distance(m):
-    return min(m*2, max(m/2, random.gauss(m, m/4)))
+# def get_abs_pos(): not used for RF
+#     '''
+#     return absolute belt position
+#     assumes that the rotary position counter never overflows
+#     this is also the mechanism to check for force reset - any time this is called.
+#     Should work from any state, should not change state
+#     '''
+#     curr_pos = belt_pos.position - v.last_lap_end
+#     if curr_pos > v.force_lap_reset:
+#         lap_reset(force=True)
+#         return curr_pos - v.force_lap_reset
+#     return curr_pos
+
+def get_random_distance(m):
+    return min(m*2, max(m/2, random() * m * 1.5))
 
 def set_reward():
     '''
     Set the position of the next reward zone. we are working one by one, always setting just the next
     Also sets a poll timer
     '''
-    v.next_reward = get_abs_pos() + get_gauss_distance(v.reward_zone_distance)
+    v.next_reward = belt_pos.position + get_random_distance(v.reward_zone_distance)
+    if v.verbose:
+        print_variables(['next_reward', ])
     set_timer('poll_timer', v.poll_resolution, output_event=True)
 
 def run_start():
@@ -117,9 +120,9 @@ def searching(event):
     '''
     if event == 'entry':
         set_reward()
-        gc.collect() #this is a good time to garbage collect as nothing urgent can happen
+        gc.collect()  # this is a good time to garbage collect as nothing urgent can happen
     elif event == 'poll_timer':
-        if get_abs_pos() > v.next_reward:
+        if belt_pos.position > v.next_reward:
             goto_state('reward_zone_entry')
         else:
             set_timer('poll_timer', v.poll_resolution, output_event=True)
@@ -127,9 +130,11 @@ def searching(event):
 def reward_zone_entry(event):
     '''Reset lick count for current rz, starts timeout, and waits for licks'''
     if event == 'entry':
-        v.lick_count___ = 0
-        set_timer('reward_timer', v.reward_zone_open)
         disarm_timer('poll_timer')
+        v.lick_count___ = 0
+        v.reward_zone_entry_time___ = get_current_time()
+        v.reward_zone_lapsed___ = False
+        set_timer('reward_timer', v.reward_zone_open)
     elif event == 'lick_1':
         goto_state('reward')
     elif event == 'reward_timer':
@@ -139,12 +144,24 @@ def reward_zone(event):
     '''
     Lick returns to this state. wait for licks and terminate if RZ is over.
     '''
-    if event == 'lick_1':
-        p = get_abs_pos()
-        if p > v.next_reward + v.reward_zone_length: #abort if zone size passed
+    if event == 'entry':
+        if v.lick_count___ >= v.max_lick_per_zone:
+            v.reward_zone_lapsed___ = True
+            set_timer('reward_timer', 10) #lapse reward zone
+        elif get_current_time() > v.reward_zone_entry_time___ + v.reward_zone_open:
+            v.reward_zone_lapsed___ = True
+            set_timer('reward_timer', 10)
+    elif event == 'lick_1':
+        print_variables()
+        if belt_pos.position > v.next_reward + v.reward_zone_length: #abort if zone size passed
+            #TODO this does not work yet, not sure why
+            print('rz length reached')
             disarm_timer('reward_timer')
             goto_state('searching')
-        goto_state('reward')
+        if get_current_time() > v.reward_zone_entry_time___ + v.reward_zone_open:
+            goto_state('searching')
+        if not v.reward_zone_lapsed___:
+            goto_state('reward')
     elif event == 'reward_timer':
         goto_state('searching')
 
@@ -155,17 +172,11 @@ def reward(event):
     '''
     if event == 'entry':
         v.lick_count___ += 1
+        if v.verbose:
+            print_variables(['total_licks', ])
         timed_goto_state('reward_zone', v.reward_duration)
         #we hope that the reward_timer event cannot be missed if it happens during this exit or searching's entry.
         solenoid.on()
         v.total_licks += 1
     elif event == 'exit':
         solenoid.off()
-    #need to repeat listening for timeout event, so it's not missed by reward_zone.
-    elif event == 'reward_timer':
-        goto_state('searching')
-
-#Gui functions
-def give_manual_reward():
-    # put reward dispense code here
-    print("This function was called from the GUI")
