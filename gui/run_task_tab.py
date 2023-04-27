@@ -14,7 +14,6 @@ from gui.custom_variables_dialog import Custom_variables_dialog
 from gui.plotting import Task_plot
 from gui.utility import init_keyboard_shortcuts, TaskSelectMenu, TaskInfo
 
-from LNCM_custom_functions import man_reward, man_open, man_toggle
 
 # Run_task_gui ------------------------------------------------------------------------
 
@@ -123,16 +122,16 @@ class Run_task_tab(QtWidgets.QWidget):
         # a button that executes a reward
         # a button that opens the valve for the time in v.manual_valve_open
         # and a toggle
-        self.man_rev_button = QtWidgets.QPushButton("Reward")
+        self.man_rew_button = QtWidgets.QPushButton("Reward")
         self.man_open_button = QtWidgets.QPushButton("Open for t")
         self.man_toggle_button = QtWidgets.QPushButton("Toggle")
         self.remotegroup_layout = QtWidgets.QHBoxLayout()
-        self.remotegroup_layout.addWidget(self.man_rev_button)
+        self.remotegroup_layout.addWidget(self.man_rew_button)
         self.remotegroup_layout.addWidget(self.man_open_button)
         self.remotegroup_layout.addWidget(self.man_toggle_button)
         self.remote_groupbox.setLayout(self.remotegroup_layout)
 
-        self.man_button.clicked.connect(self.man_open)
+        self.man_rew_button.clicked.connect(self.man_reward)
 
         # Session groupbox.
 
@@ -213,7 +212,8 @@ class Run_task_tab(QtWidgets.QWidget):
 
     #custom buttons
     def man_reward(self):
-        man_reward(self)
+        if self.board.framework_running:
+            self.board.send_reward_msg_to_pyboard()
 
     def man_open(self):
         man_open(self)
