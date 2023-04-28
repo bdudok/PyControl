@@ -198,7 +198,7 @@ def open_for_t():
 
 def toggle_valve():
     if v.sol_toggle___:
-        set_timer('sol_on', 1)
-    else:
         set_timer('sol_off', 1)
+    else:
+        set_timer('sol_on', 1)
     v.sol_toggle___ = not v.sol_toggle___
