@@ -158,7 +158,7 @@ def reward_zone(event):
             v.reward_zone_lapsed___ = True
             set_timer('reward_timer', 10)
     elif event == 'lick_1':
-        print_variables()
+        # print_variables()
         if belt_pos.position > v.next_reward + v.reward_zone_length: #abort if zone size passed
             #TODO this does not work yet, not sure why
             print('rz length reached')
