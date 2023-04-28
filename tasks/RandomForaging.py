@@ -1,6 +1,4 @@
 #Treadmill with random reward
-import random
-
 from pyControl.utility import *
 from devices import *
 import gc
@@ -27,6 +25,7 @@ v.reward_zone_entry_time___ = 0
 v.reward_zone_lapsed___ = False
 v.last_lap_end = 0 #position at the end of last lap
 v.total_licks = 0
+v.sol_toggle___ = 0
 
 board = Breakout_1_2() # Breakout board.
 
@@ -55,6 +54,7 @@ events = [
           'lick_1', #lick port
     'RFID_TIR', #RFID tag in range
     'poll_timer', 'reward_timer', #internal timers
+    'sol_on', 'sol_off', #for gui controls
  'started_running', 'stopped_running', #utility
 ]
 
@@ -91,7 +91,9 @@ def lap_reset(force=False):
 #     return curr_pos
 
 def get_random_distance(m):
-    return min(m*2, max(m/2, random() * m * 1.5))
+    # return min(m*2, max(m/2, random() * m * 1.5))
+    return min(m * 2, max(m / 2, gauss_rand(m, m / 4)))
+
 
 def set_reward():
     '''
@@ -187,5 +189,16 @@ def reward(event):
 
 #Gui functions
 def give_manual_reward():
-    # put reward dispense code here
-    goto_state('reward')
+    set_timer('sol_on', 1)
+    set_timer('sol_off', 1+v.reward_duration)
+
+def open_for_t():
+    set_timer('sol_on', 1)
+    set_timer('sol_off', 1+v.manual_valve_open)
+
+def toggle_valve():
+    if v.sol_toggle___:
+        set_timer('sol_on', 1)
+    else:
+        set_timer('sol_off', 1)
+    v.sol_toggle___ = not v.sol_toggle___
