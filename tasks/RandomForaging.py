@@ -159,8 +159,7 @@ def reward_zone(event):
             set_timer('reward_timer', 10)
     elif event == 'lick_1':
         # print_variables()
-        if belt_pos.position > v.next_reward + v.reward_zone_length: #abort if zone size passed
-            #TODO this does not work yet, not sure why
+        if belt_pos.position > (v.next_reward + v.reward_zone_length): #abort if zone size passed
             print('rz length reached')
             disarm_timer('reward_timer')
             goto_state('searching')
@@ -190,16 +189,16 @@ def reward(event):
 #Gui functions
 def give_gui_comm(comm):
     if comm == 114: #r
-        set_timer('sol_on', 1)
         set_timer('sol_off', 1+v.reward_duration)
+        publish_event('sol_on')
     elif comm == 111: #o
-        set_timer('sol_on', 1)
         set_timer('sol_off', 1 + v.manual_valve_open)
+        publish_event('sol_on')
     elif comm == 116: #t
-        if v.sol_toggle___:
-            set_timer('sol_off', 1)
-        else:
-            set_timer('sol_on', 1)
         v.sol_toggle___ = not v.sol_toggle___
+        if v.sol_toggle___:
+            publish_event('sol_on')
+        else:
+            publish_event('sol_off')
     else:
         print(comm)
