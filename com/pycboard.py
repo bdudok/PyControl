@@ -533,5 +533,4 @@ class Pycboard(Pyboard):
     def send_reward_msg_to_pyboard(self, gcomm):
         if self.framework_running:
             self.send_serial_data('G', gcomm)
-            print('serial sent')
             return None
