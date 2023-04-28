@@ -530,8 +530,8 @@ class Pycboard(Pyboard):
         self.serial.write(header_char.encode() + data_len + encoded_data + checksum)
         return None
 
-    def send_reward_msg_to_pyboard(self):
+    def send_reward_msg_to_pyboard(self, gcomm):
         if self.framework_running:
-            self.send_serial_data('G', 'r')
+            self.send_serial_data('G', gcomm)
             print('serial sent')
             return None
