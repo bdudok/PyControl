@@ -132,6 +132,8 @@ class Run_task_tab(QtWidgets.QWidget):
         self.remote_groupbox.setLayout(self.remotegroup_layout)
 
         self.man_rew_button.clicked.connect(self.man_reward)
+        self.man_open_button.clicked.connect(self.man_open)
+        self.man_toggle_button.clicked.connect(self.man_toggle)
 
         # Session groupbox.
 
