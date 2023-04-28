@@ -188,17 +188,18 @@ def reward(event):
         solenoid.off()
 
 #Gui functions
-def give_manual_reward():
-    set_timer('sol_on', 1)
-    set_timer('sol_off', 1+v.reward_duration)
-
-def open_for_t():
-    set_timer('sol_on', 1)
-    set_timer('sol_off', 1+v.manual_valve_open)
-
-def toggle_valve():
-    if v.sol_toggle___:
-        set_timer('sol_off', 1)
-    else:
+def give_gui_comm(comm):
+    if comm == 114: #r
         set_timer('sol_on', 1)
-    v.sol_toggle___ = not v.sol_toggle___
+        set_timer('sol_off', 1+v.reward_duration)
+    elif comm == 111: #o
+        set_timer('sol_on', 1)
+        set_timer('sol_off', 1 + v.manual_valve_open)
+    elif comm == 116: #t
+        if v.sol_toggle___:
+            set_timer('sol_off', 1)
+        else:
+            set_timer('sol_on', 1)
+        v.sol_toggle___ = not v.sol_toggle___
+    else:
+        print(comm)

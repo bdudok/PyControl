@@ -113,12 +113,7 @@ def recieve_data():
         checksum = int.from_bytes(usb_serial.read(2), 'little')
         if not checksum == (sum(data) & 0xFFFF):
             return  # Bad checksum.
-        elif data[-1:] == b'r':
-            sm.user_task_file.give_manual_reward()
-        elif data[-1:] == b'o':
-            sm.user_task_file.open_for_t()
-        elif data[-1:] == b't':
-            sm.user_task_file.toggle_valve()
+        sm.user_task_file.give_gui_comm(data[-1])
 
 
 
