@@ -58,7 +58,7 @@ events = [
     'RFID_TIR', #RFID tag in range
     'poll_timer', 'reward_timer', #internal timers
     'sol_on', 'sol_off', #for gui controls
- 'started_running', 'stopped_running', #utility
+ 'started_running', 'stopped_running', 'rsync'#utility
 ]
 
 initial_state = 'trial_start'
@@ -110,10 +110,10 @@ def set_reward():
 
 def run_start():
     belt_pos.record() # Start streaming wheel velocity to computer.
-    session_output.pulse(100, duty_cycle=50, n_pulses=1) #start microscope
+    session_output.pulse(10, duty_cycle=50, n_pulses=1) #start microscope
 
 def run_end():
-    session_output.pulse(100, duty_cycle=50, n_pulses=1)  # stop microscope
+    session_output.pulse(10, duty_cycle=50, n_pulses=1)  # stop microscope
 
 # State behaviour functions.
 def trial_start(event):
