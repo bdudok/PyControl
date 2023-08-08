@@ -44,6 +44,9 @@ lap_reset_tag = Digital_input(board.port_3.DIO_B, rising_event='RFID_TIR', falli
 
 solenoid = lick_port.SOL_1 # Reward delivery solenoid.
 
+session_output = Digital_output(pin=board.BNC_1, )
+sync_output = Rsync(pin=board.BNC_2, mean_IPI=1000) #sync signal
+
 # States and events.
 
 states = [ 'trial_start',
@@ -107,6 +110,10 @@ def set_reward():
 
 def run_start():
     belt_pos.record() # Start streaming wheel velocity to computer.
+    session_output.pulse(100, duty_cycle=50, n_pulses=1) #start microscope
+
+def run_end():
+    session_output.pulse(100, duty_cycle=50, n_pulses=1)  # stop microscope
 
 # State behaviour functions.
 def trial_start(event):
