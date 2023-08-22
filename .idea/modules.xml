@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/pyControl.iml" filepath="$PROJECT_DIR$/.idea/pyControl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/PyControl.iml" filepath="$PROJECT_DIR$/.idea/PyControl.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../Recorder/.idea/Recorder.iml" filepath="$PROJECT_DIR$/../Recorder/.idea/Recorder.iml" />
     </modules>
   </component>
 </project>

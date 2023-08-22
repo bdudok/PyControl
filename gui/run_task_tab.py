@@ -14,6 +14,9 @@ from gui.custom_variables_dialog import Custom_variables_dialog
 from gui.plotting import Task_plot
 from gui.utility import init_keyboard_shortcuts, TaskSelectMenu, TaskInfo
 
+import json
+import zmq
+
 
 # Run_task_gui ------------------------------------------------------------------------
 
@@ -37,6 +40,14 @@ class Run_task_tab(QtWidgets.QWidget):
         self.running = False
         self.subject_changed = False
         self.variables_dialog = None
+
+        #zmq variables
+        self.recorder_pollinterval = 1000
+        port = self.parent().recorder_port
+        context = zmq.Context()
+        self.server = context.socket(zmq.REP)
+        self.server.bind(f"tcp://*:{port}")
+        self.listening = False
 
         # GUI groupbox.
 
@@ -135,6 +146,22 @@ class Run_task_tab(QtWidgets.QWidget):
         self.man_open_button.clicked.connect(self.man_open)
         self.man_toggle_button.clicked.connect(self.man_toggle)
 
+        #Sync broupbox
+        self.sync_groupbox = QtWidgets.QGroupBox("Synchronous recording")
+        self.syncgroup_layout = QtWidgets.QHBoxLayout()
+        #to receive zmq calls for synchronized experiments
+        # button to 'Arm' for recording
+        self.arm_toggle = QtWidgets.QPushButton()
+        self.arm_toggle.setCheckable(True)
+        self.set_switch_state('arm')
+        self.syncgroup_layout.addWidget(self.arm_toggle)
+        self.arm_toggle.clicked.connect(self.arm)
+        # label to display prefix
+        self.filename_label = QtWidgets.QLabel('Connect board and set task before arming', )
+
+        self.syncgroup_layout.addWidget(self.filename_label)
+        self.sync_groupbox.setLayout(self.syncgroup_layout)
+
         # Session groupbox.
 
         self.session_groupbox = QtWidgets.QGroupBox("Session")
@@ -175,6 +202,7 @@ class Run_task_tab(QtWidgets.QWidget):
         self.horizontal_layout_1 = QtWidgets.QHBoxLayout()
         self.horizontal_layout_2 = QtWidgets.QHBoxLayout()
         self.horizontal_layout_2b = QtWidgets.QHBoxLayout()
+        self.horizontal_layout_30 = QtWidgets.QHBoxLayout()
         self.horizontal_layout_3 = QtWidgets.QHBoxLayout()
 
         self.horizontal_layout_1.addWidget(self.status_groupbox)
@@ -182,10 +210,12 @@ class Run_task_tab(QtWidgets.QWidget):
         self.horizontal_layout_2.addWidget(self.task_groupbox)
         self.horizontal_layout_2.addWidget(self.file_groupbox)
         self.horizontal_layout_2b.addWidget(self.remote_groupbox)
+        self.horizontal_layout_30.addWidget(self.sync_groupbox)
         self.horizontal_layout_3.addWidget(self.session_groupbox)
         self.vertical_layout.addLayout(self.horizontal_layout_1)
         self.vertical_layout.addLayout(self.horizontal_layout_2)
         self.vertical_layout.addLayout(self.horizontal_layout_2b)
+        self.vertical_layout.addLayout(self.horizontal_layout_30)
         self.vertical_layout.addLayout(self.horizontal_layout_3)
         self.vertical_layout.addWidget(self.log_textbox, 20)
         self.vertical_layout.addWidget(self.task_plot, 80)
@@ -231,6 +261,82 @@ class Run_task_tab(QtWidgets.QWidget):
         self.log_textbox.moveCursor(QtGui.QTextCursor.MoveOperation.End)
         self.GUI_main.app.processEvents()  # To update gui during long operations that print progress.
 
+    def arm(self):
+        #the two states of the button. nb a 3rd state is controlled by the client.
+        self.armed = self.arm_toggle.isChecked()
+        if self.armed:
+            self.set_switch_state('armed')
+            #will poll request queue periodically
+            self.zmqtimer = QtCore.QTimer()
+            self.zmqtimer.setInterval(self.recorder_pollinterval)
+            self.zmqtimer.timeout.connect(self.listen)
+            self.zmqtimer.start()
+
+        else:
+            if self.board is not None:
+                self.arm_toggle.setStyleSheet("background-color : red")
+                self.arm_toggle.setText('Arm')
+                self.zmqtimer.stop()
+            else:
+                self.arm_toggle.setChecked(False)
+
+    def set_switch_state(self, state):
+        # we will have a base state when task can bemodified
+        # after 'arming', listening to requests from client
+        if state == 'armed':
+            self.arm_toggle.setStyleSheet("background-color : green")
+            self.arm_toggle.setText('Armed')
+        elif state == 'arm':
+            self.arm_toggle.setStyleSheet("background-color : red")
+            self.arm_toggle.setText('Arm')
+        elif state == 'running':
+            self.arm_toggle.setStyleSheet("background-color : blue")
+            self.arm_toggle.setText('Acquiring')
+
+    def listen(self):
+        self.listening=True
+        # poll the request queue, and respond if anything.
+        # not in cycle, non-blocking, called periodically by a Qt timer
+        if (self.server.poll(self.recorder_pollinterval) & zmq.POLLIN) != 0:
+            request = json.loads(self.server.recv_json()) #TODO receiver.RCVTIMEO = 100 # in milliseconds
+            print(request)
+            if 'set' in request:
+                #do stuff to set up the saving path
+                if self.board is None or self.task_select.text() == "select task":
+                    message = {'set': False, 'log': 'board or task not set up'}
+                    self.server.send_json(json.dumps(message))
+                    self.listen()
+                self.set_prefix(request['prefix'])
+                self.set_handle(request['handle'])
+                self.filename_label.setText(request['prefix'])
+                logstring = f'Task:{self.task_select.text()}'
+                message = {'set': True, 'log': logstring}
+                self.server.send_json(json.dumps(message))
+                self.arm_toggle.setEnabled(False)
+            elif 'go' in request:
+                self.set_switch_state('running')
+                # self.start_task() #TODO what else is needed for this?
+                message = {'go': True}
+                self.server.send_json(json.dumps(message))
+            elif 'stop' in request:
+                # self.stop_task()
+                self.set_switch_state('arm')
+                self.arm_toggle.setEnabled(True)
+                self.arm_toggle.setChecked(True)
+                self.arm()
+                logstring = f'{0} laps, {0} rewards'
+                message = {'stop': True, 'log': logstring}
+                self.server.send_json(json.dumps(message))
+        self.listening = False
+
+    def set_prefix(self, prefix):
+        pass #TODO set the session name in GUI and the relevant attribute
+        # self.data_dir = self.data_dir_text.text()
+
+    def set_handle(self, handle):
+        pass #TODO set the folder in GUI and attribute to the path of the handle
+        # self.subject_text.text()
+
     def test_data_path(self):
         # Checks whether data dir and subject ID are valid.
         self.data_dir = self.data_dir_text.text()
@@ -245,6 +351,8 @@ class Run_task_tab(QtWidgets.QWidget):
             return False
 
     def refresh(self):
+        if self.listening:
+            return None
         # Called regularly when framework not running.
         if self.GUI_main.setups_tab.available_setups_changed:
             self.board_select.clear()

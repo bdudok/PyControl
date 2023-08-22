@@ -23,12 +23,13 @@ if os.name == 'nt': # Needed on windows to get taskbar icon to display correctly
 # --------------------------------------------------------------------------------
 
 class GUI_main(QtWidgets.QMainWindow):
-    def __init__(self,app):
+    def __init__(self,app, recorder_port=5556):
         super().__init__()
         self.setWindowTitle(f'pyControl v{VERSION}')
         self.setGeometry(10, 30, 700, 800) # Left, top, width, height.
 
         # Variables
+        self.recorder_port = recorder_port
         self.refresh_interval = 1000 # How often refresh method is called when not running (ms).
         self.available_tasks = None  # List of task file names in tasks folder.
         self.available_ports = None  # List of available serial ports.
