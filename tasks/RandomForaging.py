@@ -1,4 +1,5 @@
 #Treadmill with random reward
+from devices.frame_trigger import Frame_trigger
 from pyControl.utility import *
 from devices import *
 import gc
@@ -45,7 +46,8 @@ lap_reset_tag = Digital_input(board.port_3.DIO_B, rising_event='RFID_TIR', falli
 solenoid = lick_port.SOL_1 # Reward delivery solenoid.
 
 session_output = Digital_output(pin=board.BNC_1, )
-sync_output = Rsync(pin=board.BNC_2, mean_IPI=1000) #sync signal
+sync_output = Rsync(pin=board.BNC_2, mean_IPI=1000, event_name='rsync') #sync signnal
+frame_trigger = Frame_trigger(pin=board.DAC_1, pulse_rate=30, name='frame_trigger')
 
 # States and events.
 
@@ -58,7 +60,7 @@ events = [
     'RFID_TIR', #RFID tag in range
     'poll_timer', 'reward_timer', #internal timers
     'sol_on', 'sol_off', #for gui controls
- 'started_running', 'stopped_running', 'rsync'#utility
+ 'started_running', 'stopped_running', 'rsync', 'frame_trigger'#utility
 ]
 
 initial_state = 'trial_start'
