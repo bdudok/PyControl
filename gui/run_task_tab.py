@@ -157,7 +157,7 @@ class Run_task_tab(QtWidgets.QWidget):
         self.syncgroup_layout.addWidget(self.arm_toggle)
         self.arm_toggle.clicked.connect(self.arm)
         # label to display prefix
-        self.filename_label = QtWidgets.QLabel('Connect board and set task before arming', )
+        self.filename_label = QtWidgets.QLabel('Upload task before arming', )
 
         self.syncgroup_layout.addWidget(self.filename_label)
         self.sync_groupbox.setLayout(self.syncgroup_layout)
@@ -297,8 +297,8 @@ class Run_task_tab(QtWidgets.QWidget):
         self.listening=True
         # poll the request queue, and respond if anything.
         # not in cycle, non-blocking, called periodically by a Qt timer
-        if (self.server.poll(self.recorder_pollinterval) & zmq.POLLIN) != 0:
-            request = json.loads(self.server.recv_json()) #TODO receiver.RCVTIMEO = 100 # in milliseconds
+        if (self.server.poll(self.recorder_pollinterval*0.01) & zmq.POLLIN) != 0:
+            request = json.loads(self.server.recv_json())
             print(request)
             if 'set' in request:
                 #do stuff to set up the saving path
@@ -313,13 +313,17 @@ class Run_task_tab(QtWidgets.QWidget):
                 message = {'set': True, 'log': logstring}
                 self.server.send_json(json.dumps(message))
                 self.arm_toggle.setEnabled(False)
+                self.filename_label.setText('START synchronous recording in Recorder')
             elif 'go' in request:
                 self.set_switch_state('running')
-                # self.start_task() #TODO what else is needed for this?
+                if not self.fresh_task:
+                    self.setup_task()
+                self.start_task()
                 message = {'go': True}
                 self.server.send_json(json.dumps(message))
+                self.filename_label.setText('STOP synchronous recording in Recorder')
             elif 'stop' in request:
-                # self.stop_task()
+                self.stop_task()
                 self.set_switch_state('arm')
                 self.arm_toggle.setEnabled(True)
                 self.arm_toggle.setChecked(True)
@@ -327,15 +331,14 @@ class Run_task_tab(QtWidgets.QWidget):
                 logstring = f'{0} laps, {0} rewards'
                 message = {'stop': True, 'log': logstring}
                 self.server.send_json(json.dumps(message))
+                self.filename_label.setText('Ready for next session')
         self.listening = False
 
     def set_prefix(self, prefix):
-        pass #TODO set the session name in GUI and the relevant attribute
-        # self.data_dir = self.data_dir_text.text()
+        self.subject_text.setText(prefix)
 
     def set_handle(self, handle):
-        pass #TODO set the folder in GUI and attribute to the path of the handle
-        # self.subject_text.text()
+        self.data_dir_text.setText(os.path.dirname(handle))
 
     def test_data_path(self):
         # Checks whether data dir and subject ID are valid.
@@ -447,6 +450,7 @@ class Run_task_tab(QtWidgets.QWidget):
             else:
                 self.status_text.setText("Uploading..")
                 self.task_hash = _djb2_file(os.path.join(self.GUI_main.task_directory, task + ".py"))
+                self.filename_label.setText('Arm to receive filename')
             self.start_button.setEnabled(False)
             self.variables_button.setEnabled(False)
             self.repaint()

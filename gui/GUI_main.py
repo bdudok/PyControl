@@ -157,6 +157,8 @@ class GUI_main(QtWidgets.QMainWindow):
     def refresh(self):
         '''Called regularly when framework not running.'''
         # Scan task folder.
+        if self.run_task_tab.listening:
+            return None
         tasks = self.get_task_file_list()
         self.available_tasks_changed = tasks != self.available_tasks
         if self.available_tasks_changed:
