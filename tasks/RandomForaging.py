@@ -4,12 +4,13 @@ from pyControl.utility import *
 from devices import *
 import gc
 
-cm = 41.5
+cm = 41.5 #quad/cm
+ul = 24 #ms/microliter
 
 v.reward_zone_distance = int(50 * cm) #distance between zones
 v.reward_zone_open = 5*second #reward availability after RZ entry
 v.reward_zone_length = int(10 * cm)
-v.reward_duration = 100*ms  # Time reward solenoid is open for.
+v.reward_duration = int(2*ul)  # Time reward solenoid is open for. - calibrated to microliters
 v.poll_resolution = 1000*ms # Time to push events to the search state - mouse can't find new reward zone between polls
 v.force_lap_reset = int(220 * cm) #lap reset triggered if not reset tag
 v.manual_valve_open = 1*second
@@ -37,17 +38,17 @@ belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', thres
                           rising_event='started_running',
                           falling_event='stopped_running')
 
-lick_port = Lickometer(board.port_2, debounce=20)
+lick_port = Lickometer(board.port_2, debounce=50)
 
 # lap_reset_tag_cp = Digital_input(board.port_3.DIO_A, rising_event='RFID_CP', falling_event=None, debounce=5, pull='down')
 # cp has no signal, use TIR pin instead
-lap_reset_tag = Digital_input(board.port_3.DIO_B, rising_event='RFID_TIR', falling_event=None, debounce=5, pull='down')
+lap_reset_tag = Digital_input(board.port_3.DIO_B, rising_event='RFID_TIR', falling_event=None, debounce=1000, pull='down')
 
 solenoid = lick_port.SOL_1 # Reward delivery solenoid.
 
 session_output = Digital_output(pin=board.BNC_1, )
 sync_output = Rsync(pin=board.BNC_2, mean_IPI=1000, event_name='rsync') #sync signnal
-frame_trigger = Frame_trigger(pin=board.DAC_1, pulse_rate=30, name='frame_trigger')
+# frame_trigger = Frame_trigger(pin=board.DAC_1, pulse_rate=30, name='frame_trigger')
 
 # States and events.
 
@@ -60,7 +61,7 @@ events = [
     'RFID_TIR', #RFID tag in range
     'poll_timer', 'reward_timer', #internal timers
     'sol_on', 'sol_off', #for gui controls
- 'started_running', 'stopped_running', 'rsync', 'frame_trigger'#utility
+ 'started_running', 'stopped_running', 'rsync', #'frame_trigger'#utility
 ]
 
 initial_state = 'trial_start'
@@ -99,6 +100,9 @@ def get_random_distance(m):
     # return min(m*2, max(m/2, random() * m * 1.5))
     return min(m * 2, max(m / 2, gauss_rand(m, m / 4)))
 
+def close_reward_zone():
+    v.reward_zone_lapsed___ = True
+    set_timer('reward_timer', 10)
 
 def set_reward():
     '''
@@ -161,11 +165,9 @@ def reward_zone(event):
     '''
     if event == 'entry':
         if v.lick_count___ >= v.max_lick_per_zone:
-            v.reward_zone_lapsed___ = True
-            set_timer('reward_timer', 10) #lapse reward zone
+            close_reward_zone()
         elif get_current_time() > v.reward_zone_entry_time___ + v.reward_zone_open:
-            v.reward_zone_lapsed___ = True
-            set_timer('reward_timer', 10)
+            close_reward_zone()
     elif event == 'lick_1':
         # print_variables()
         if belt_pos.position > (v.next_reward + v.reward_zone_length): #abort if zone size passed
@@ -176,6 +178,8 @@ def reward_zone(event):
             goto_state('searching')
         if not v.reward_zone_lapsed___:
             goto_state('reward')
+        else:
+            goto_state('searching')
     elif event == 'reward_timer':
         goto_state('searching')
 
@@ -189,11 +193,17 @@ def reward(event):
         if v.verbose:
             print_variables(['total_licks', ])
         timed_goto_state('reward_zone', v.reward_duration)
-        #we hope that the reward_timer event cannot be missed if it happens during this exit or searching's entry.
+        #we hope that the reward_timer event cannot be missed if it happens during this exit or searching's entry. - it can.
         solenoid.on()
         v.total_licks += 1
     elif event == 'exit':
         solenoid.off()
+    else:
+        if v.lick_count___ >= v.max_lick_per_zone:
+            close_reward_zone()
+        elif get_current_time() > v.reward_zone_entry_time___ + v.reward_zone_open:
+            close_reward_zone()
+
 
 #Gui functions
 def give_gui_comm(comm):
