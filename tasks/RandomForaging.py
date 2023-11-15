@@ -44,6 +44,10 @@ lick_port = Lickometer(board.port_2, debounce=50)
 # cp has no signal, use TIR pin instead
 lap_reset_tag = Digital_input(board.port_3.DIO_B, rising_event='RFID_TIR', falling_event=None, debounce=1000, pull='down')
 
+#led control and power
+led_power = Digital_output(pin=board.port_3.POW_B)
+led_control = Digital_output(pin=board.port_3.POW_A)
+
 solenoid = lick_port.SOL_1 # Reward delivery solenoid.
 
 session_output = Digital_output(pin=board.BNC_1, )
@@ -117,9 +121,15 @@ def set_reward():
 def run_start():
     belt_pos.record() # Start streaming wheel velocity to computer.
     session_output.pulse(10, duty_cycle=50, n_pulses=1) #start microscope
+    #start LED light
+    led_control.pulse(100, duty_cycle=10, n_pulses=False)
+    led_power.on()
+
 
 def run_end():
     session_output.pulse(10, duty_cycle=50, n_pulses=1)  # stop microscope
+    led_power.off()
+    led_control.off()
 
 # State behaviour functions.
 def trial_start(event):
