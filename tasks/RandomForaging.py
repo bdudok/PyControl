@@ -34,9 +34,9 @@ board = Breakout_1_2() # Breakout board.
 # Instantiate hardware - would normally be in a seperate hardware definition file.
 
 # Running wheel must be plugged into port 1 of breakout board.
-belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', threshold=100,
-                          rising_event='started_running',
-                          falling_event='stopped_running')
+belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', threshold=100,)
+                          # rising_event='started_running',
+                          # falling_event='stopped_running')
 
 lick_port = Lickometer(board.port_2, debounce=50)
 
@@ -65,7 +65,7 @@ events = [
     'RFID_TIR', #RFID tag in range
     'poll_timer', 'reward_timer', #internal timers
     'sol_on', 'sol_off', #for gui controls
- 'started_running', 'stopped_running', 'rsync', #'frame_trigger'#utility
+    'rsync', #'frame_trigger'#utility 'started_running', 'stopped_running',
 ]
 
 initial_state = 'trial_start'
@@ -122,14 +122,14 @@ def run_start():
     belt_pos.record() # Start streaming wheel velocity to computer.
     session_output.pulse(10, duty_cycle=50, n_pulses=1) #start microscope
     #start LED light
-    led_control.pulse(100, duty_cycle=10, n_pulses=False)
-    led_power.on()
+    # led_control.pulse(100, duty_cycle=10, n_pulses=False)
+    # led_power.on()
 
 
 def run_end():
     session_output.pulse(10, duty_cycle=50, n_pulses=1)  # stop microscope
-    led_power.off()
-    led_control.off()
+    # led_power.off()
+    # led_control.off()
 
 # State behaviour functions.
 def trial_start(event):
