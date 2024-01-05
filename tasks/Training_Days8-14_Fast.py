@@ -77,7 +77,7 @@ events = [
     'RFID_TIR', #RFID tag in range
     'poll_timer', 'reward_timer', #internal timers
     'sol_on', 'sol_off', #for gui controls
- 'started_running', 'stopped_running', 'rsync', #'frame_trigger'#utility
+  'rsync', #'frame_trigger'#utility 'started_running', 'stopped_running',
 ]
 
 initial_state = 'trial_start'
