@@ -15,7 +15,7 @@ n_zones = 4 #how many zones per lap. high number = little running required betwe
 reward_lockout_time = 5 #s. how long the mouse can take reward before having to find the next zone. start with 5
 reward_lockout_drops = 50 #number of rewards the mouse can take before having to find the next zone. start with 50.
 reward_size = 2 #ul. 2 ul is standard drop size.
-
+hidden_reward = False
 '''-------------------------------------------------------------------'''
 #calibration
 cm = 41.5 #quad/cm
@@ -32,6 +32,7 @@ v.force_lap_reset = int(belt_len * cm * 1.1) #lap reset triggered if not reset t
 v.manual_valve_open = 1*second
 v.max_lick_per_zone = reward_lockout_drops
 v.verbose=0
+v.is_hidden = hidden_reward
 
 
 
@@ -169,6 +170,8 @@ def reward_zone_entry(event):
         v.lick_count___ = 0
         v.reward_zone_entry_time___ = get_current_time()
         v.reward_zone_lapsed___ = False
+        if not v.is_hidden:
+            set_timer('lick_1', 10*ms)
         set_timer('reward_timer', v.reward_zone_open)
     elif event == 'lick_1':
         goto_state('reward')

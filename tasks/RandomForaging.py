@@ -16,6 +16,7 @@ v.force_lap_reset = int(220 * cm) #lap reset triggered if not reset tag
 v.manual_valve_open = 1*second
 v.max_lick_per_zone = 10
 v.verbose=1
+v.is_hidden = True
 
 
 
@@ -163,6 +164,8 @@ def reward_zone_entry(event):
         v.lick_count___ = 0
         v.reward_zone_entry_time___ = get_current_time()
         v.reward_zone_lapsed___ = False
+        if not v.is_hidden:
+            set_timer('lick_1', 10*ms)
         set_timer('reward_timer', v.reward_zone_open)
     elif event == 'lick_1':
         goto_state('reward')
