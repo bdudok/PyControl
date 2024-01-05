@@ -11,9 +11,9 @@ increase difficulty only if mouse clearly understands that it has to run and fin
 Revert to easier settings if the mouse is thirsty but can't find enough RZs.
 '''
 
-n_zones = 4 #how many zones per lap. high number = little running required between rewards
-reward_lockout_time = 5 #s. how long the mouse can take reward before having to find the next zone.
-reward_lockout_drops = 50 #number of rewards the mouse can take before having to find the next zone.
+n_zones = 4 #how many zones per lap. high number = little running required between rewards. start with 4
+reward_lockout_time = 5 #s. how long the mouse can take reward before having to find the next zone. start with 5
+reward_lockout_drops = 50 #number of rewards the mouse can take before having to find the next zone. start with 50.
 reward_size = 2 #ul. 2 ul is standard drop size.
 
 '''-------------------------------------------------------------------'''

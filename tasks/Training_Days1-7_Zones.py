@@ -10,9 +10,9 @@ Progression: 10-8-6-4 zones per lap, increase difficulty every time the mouse ha
 Revert to easier settings if the mouse is thirsty but can't find enough RZs.
 '''
 
-n_zones = 10 #how many zones per lap. high number = little running required between rewards
-reward_lockout_time = 10 #s. how long the mouse can take reward before having to find the next zone.
-reward_lockout_drops = 50 #number of rewards the mouse can take before having to find the next zone.
+n_zones = 10 #how many zones per lap. high number = little running required between rewards. start with 10.
+reward_lockout_time = 10 #s. how long the mouse can take reward before having to find the next zone. start with 10.
+reward_lockout_drops = 50 #number of rewards the mouse can take before having to find the next zone. start with 50.
 reward_size = 2 #ul. 2 ul is standard drop size.
 
 '''-------------------------------------------------------------------'''

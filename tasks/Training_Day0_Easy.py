@@ -5,9 +5,9 @@ from devices import *
 import gc
 
 '''---------------------Day 0 config for "unlimited" rewards----------'''
-n_zones = 10 #how many zones per lap. high number = little running required between rewards
-reward_lockout_time = 60 #s. how long the mouse can take reward before having to find the next zone.
-reward_lockout_drops = 100 #number of rewards the mouse can take before having to find the next zone.
+n_zones = 10 #how many zones per lap. high number = little running required between rewards start with 10
+reward_lockout_time = 60 #s. how long the mouse can take reward before having to find the next zone. start with 60
+reward_lockout_drops = 100 #number of rewards the mouse can take before having to find the next zone. start with 100
 reward_size = 2 #ul. 2 ul is standard drop size.
 
 '''-------------------------------------------------------------------'''
