@@ -4,19 +4,28 @@ from pyControl.utility import *
 from devices import *
 import gc
 
+'''---------------------Day 0 config for "unlimited" rewards----------'''
+n_zones = 10 #how many zones per lap. high number = little running required between rewards
+reward_lockout_time = 60 #s. how long the mouse can take reward before having to find the next zone.
+reward_lockout_drops = 100 #number of rewards the mouse can take before having to find the next zone.
+reward_size = 2 #ul. 2 ul is standard drop size.
+
+'''-------------------------------------------------------------------'''
+#calibration
 cm = 41.5 #quad/cm
 ul = 24 #ms/microliter
-n_zones = 10
+belt_len = 200 #cm
 
-v.reward_zone_distance = int(200/n_zones * cm) #distance between zones
-v.reward_zone_open = 60*second #reward availability after RZ entry
-v.reward_zone_length = int(10 * cm)
-v.reward_duration = int(2*ul)  # Time reward solenoid is open for. - calibrated to microliters
+
+v.reward_zone_distance = int(belt_len/n_zones * cm) #distance between zones
+v.reward_zone_open = reward_lockout_time*second #reward availability after RZ entry
+v.reward_zone_length = int(n_zones * cm)
+v.reward_duration = int(reward_size*ul)  # Time reward solenoid is open for. - calibrated to microliters
 v.poll_resolution = 1000*ms # Time to push events to the search state - mouse can't find new reward zone between polls
-v.force_lap_reset = int(220 * cm) #lap reset triggered if not reset tag
+v.force_lap_reset = int(belt_len * cm * 1.1) #lap reset triggered if not reset tag
 v.manual_valve_open = 1*second
-v.max_lick_per_zone = 100
-v.verbose=1
+v.max_lick_per_zone = reward_lockout_drops
+v.verbose=0
 
 
 
@@ -35,9 +44,9 @@ board = Breakout_1_2() # Breakout board.
 # Instantiate hardware - would normally be in a seperate hardware definition file.
 
 # Running wheel must be plugged into port 1 of breakout board.
-belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', threshold=100,
-                          rising_event='started_running',
-                          falling_event='stopped_running')
+belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', threshold=100,)
+                          # rising_event='started_running',
+                          # falling_event='stopped_running')
 
 lick_port = Lickometer(board.port_2, debounce=50)
 
