@@ -16,7 +16,6 @@ v.force_lap_reset = int(220 * cm) #lap reset triggered if not reset tag
 v.manual_valve_open = 1*second
 v.max_lick_per_zone = 10
 v.verbose=1
-v.is_hidden = True
 
 
 
@@ -35,9 +34,9 @@ board = Breakout_1_2() # Breakout board.
 # Instantiate hardware - would normally be in a seperate hardware definition file.
 
 # Running wheel must be plugged into port 1 of breakout board.
-belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', threshold=100,)
-                          # rising_event='started_running',
-                          # falling_event='stopped_running')
+belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', threshold=100,
+                          rising_event='started_running',
+                          falling_event='stopped_running')
 
 lick_port = Lickometer(board.port_2, debounce=50)
 
@@ -45,14 +44,10 @@ lick_port = Lickometer(board.port_2, debounce=50)
 # cp has no signal, use TIR pin instead
 lap_reset_tag = Digital_input(board.port_3.DIO_B, rising_event='RFID_TIR', falling_event=None, debounce=1000, pull='down')
 
-#led control and power
-led_power = Digital_output(pin=board.port_3.POW_B)
-led_control = Digital_output(pin=board.port_3.POW_A)
-
 solenoid = lick_port.SOL_1 # Reward delivery solenoid.
 
 session_output = Digital_output(pin=board.BNC_1, )
-sync_output = Rsync(pin=board.BNC_2, mean_IPI=1000, event_name='rsync') #sync signnal
+# sync_output = Rsync(pin=board.BNC_2, mean_IPI=1000, event_name='rsync') #sync signnal
 # frame_trigger = Frame_trigger(pin=board.DAC_1, pulse_rate=30, name='frame_trigger')
 
 # States and events.
@@ -66,7 +61,7 @@ events = [
     'RFID_TIR', #RFID tag in range
     'poll_timer', 'reward_timer', #internal timers
     'sol_on', 'sol_off', #for gui controls
-    'rsync', #'frame_trigger'#utility 'started_running', 'stopped_running',
+ 'started_running', 'stopped_running', 'rsync', #'frame_trigger'#utility
 ]
 
 initial_state = 'trial_start'
@@ -122,15 +117,9 @@ def set_reward():
 def run_start():
     belt_pos.record() # Start streaming wheel velocity to computer.
     session_output.pulse(10, duty_cycle=50, n_pulses=1) #start microscope
-    #start LED light
-    # led_control.pulse(100, duty_cycle=10, n_pulses=False)
-    # led_power.on()
-
 
 def run_end():
     session_output.pulse(10, duty_cycle=50, n_pulses=1)  # stop microscope
-    # led_power.off()
-    # led_control.off()
 
 # State behaviour functions.
 def trial_start(event):
@@ -164,8 +153,6 @@ def reward_zone_entry(event):
         v.lick_count___ = 0
         v.reward_zone_entry_time___ = get_current_time()
         v.reward_zone_lapsed___ = False
-        if not v.is_hidden:
-            set_timer('lick_1', 10*ms)
         set_timer('reward_timer', v.reward_zone_open)
     elif event == 'lick_1':
         goto_state('reward')
