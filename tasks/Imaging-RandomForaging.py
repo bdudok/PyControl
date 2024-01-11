@@ -4,18 +4,11 @@ from pyControl.utility import *
 from devices import *
 import gc
 
-'''
---------Days 1-7 config for increasing reward zone distance----------
-Progression: 10-8-6-4 zones per lap, increase difficulty every time the mouse has 200+ rewards in 10 minutes
-Revert to easier settings if the mouse is thirsty but can't find enough RZs.
-'''
-
-n_zones = 10 #how many zones per lap. high number = little running required between rewards. start with 10.
-reward_lockout_time = 10 #s. how long the mouse can take reward before having to find the next zone. start with 10.
-reward_lockout_drops = 50 #number of rewards the mouse can take before having to find the next zone. start with 50.
+n_zones = 4 #how many zones per lap. high number = little running required between rewards. start with 4
+reward_lockout_time = 5 #s. how long the mouse can take reward before having to find the next zone. start with 5
+reward_lockout_drops = 20 #number of rewards the mouse can take before having to find the next zone. start with 50.
 reward_size = 2 #ul. 2 ul is standard drop size.
 hidden_reward = False
-
 '''-------------------------------------------------------------------'''
 #calibration
 cm = 41.5 #quad/cm
@@ -33,8 +26,6 @@ v.manual_valve_open = 1*second
 v.max_lick_per_zone = reward_lockout_drops
 v.verbose=0
 v.is_hidden = hidden_reward
-
-
 
 #init attributes for use within states:
 v.next_reward = 0 #starting reward zone
@@ -61,10 +52,14 @@ lick_port = Lickometer(board.port_2, debounce=50)
 # cp has no signal, use TIR pin instead
 lap_reset_tag = Digital_input(board.port_3.DIO_B, rising_event='RFID_TIR', falling_event=None, debounce=1000, pull='down')
 
+#led control and power
+led_power = Digital_output(pin=board.port_3.POW_B)
+led_control = Digital_output(pin=board.port_3.POW_A)
+
 solenoid = lick_port.SOL_1 # Reward delivery solenoid.
 
 session_output = Digital_output(pin=board.BNC_1, )
-# sync_output = Rsync(pin=board.BNC_2, mean_IPI=1000, event_name='rsync') #sync signnal
+sync_output = Rsync(pin=board.BNC_2, mean_IPI=1000, event_name='rsync') #sync signnal
 # frame_trigger = Frame_trigger(pin=board.DAC_1, pulse_rate=30, name='frame_trigger')
 
 # States and events.
@@ -78,7 +73,7 @@ events = [
     'RFID_TIR', #RFID tag in range
     'poll_timer', 'reward_timer', #internal timers
     'sol_on', 'sol_off', #for gui controls
- 'rsync', #'frame_trigger'#utility  'started_running', 'stopped_running',
+    'rsync', #'frame_trigger'#utility 'started_running', 'stopped_running',
 ]
 
 initial_state = 'trial_start'
@@ -134,10 +129,16 @@ def set_reward():
 def run_start():
     belt_pos.record() # Start streaming wheel velocity to computer.
     session_output.pulse(10, duty_cycle=50, n_pulses=1) #start microscope
+    #start LED light
+    # led_control.pulse(100, duty_cycle=10, n_pulses=False)
+    # led_power.on()
+
 
 def run_end():
     session_output.pulse(10, duty_cycle=50, n_pulses=1)  # stop microscope
-    print_variables(['lap_counter', ])
+    # led_power.off()
+    # led_control.off()
+    print_variables(['lap_counter', 'total_licks'])
 
 # State behaviour functions.
 def trial_start(event):

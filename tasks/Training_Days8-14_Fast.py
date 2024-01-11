@@ -137,6 +137,7 @@ def run_start():
 
 def run_end():
     session_output.pulse(10, duty_cycle=50, n_pulses=1)  # stop microscope
+    print_variables(['lap_counter', ])
 
 # State behaviour functions.
 def trial_start(event):
