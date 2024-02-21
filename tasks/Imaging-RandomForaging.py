@@ -4,9 +4,9 @@ from pyControl.utility import *
 from devices import *
 import gc
 
-n_zones = 4 #how many zones per lap. high number = little running required between rewards. start with 4
-reward_lockout_time = 5 #s. how long the mouse can take reward before having to find the next zone. start with 5
-reward_lockout_drops = 20 #number of rewards the mouse can take before having to find the next zone. start with 50.
+n_zones = 2 #how many zones per lap. high number = little running required between rewards. start with 4
+reward_lockout_time = 3 #s. how long the mouse can take reward before having to find the next zone. start with 5
+reward_lockout_drops = 10 #number of rewards the mouse can take before having to find the next zone. start with 50.
 reward_size = 2 #ul. 2 ul is standard drop size.
 hidden_reward = False
 '''-------------------------------------------------------------------'''
@@ -54,7 +54,7 @@ lap_reset_tag = Digital_input(board.port_3.DIO_B, rising_event='RFID_TIR', falli
 
 #led control and power
 led_power = Digital_output(pin=board.port_3.POW_B)
-led_control = Digital_output(pin=board.port_3.POW_A)
+# led_control = Digital_output(pin=board.port_3.POW_A)
 
 solenoid = lick_port.SOL_1 # Reward delivery solenoid.
 
@@ -65,7 +65,7 @@ sync_output = Rsync(pin=board.BNC_2, mean_IPI=1000, event_name='rsync') #sync si
 # States and events.
 
 states = [ 'trial_start',
-          'searching', 'reward_zone_entry', 'reward_zone', 'reward',#RZ behavior
+          'searching', 'reward_zone_entry', 'reward_zone', 'reward', #RZ behavior
           ]
           
 events = [
@@ -131,12 +131,13 @@ def run_start():
     session_output.pulse(10, duty_cycle=50, n_pulses=1) #start microscope
     #start LED light
     # led_control.pulse(100, duty_cycle=10, n_pulses=False)
-    # led_power.on()
+    # led_power.pulse(10, duty_cycle=50,)
+    led_power.on()
 
 
 def run_end():
     session_output.pulse(10, duty_cycle=50, n_pulses=1)  # stop microscope
-    # led_power.off()
+    led_power.off()
     # led_control.off()
     print_variables(['lap_counter', 'total_licks'])
 
