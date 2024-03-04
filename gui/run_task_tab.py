@@ -136,15 +136,18 @@ class Run_task_tab(QtWidgets.QWidget):
         self.man_rew_button = QtWidgets.QPushButton("Reward")
         self.man_open_button = QtWidgets.QPushButton("Open for t")
         self.man_toggle_button = QtWidgets.QPushButton("Toggle")
+        self.man_stim_button = QtWidgets.QPushButton("PhotoStim")
         self.remotegroup_layout = QtWidgets.QHBoxLayout()
         self.remotegroup_layout.addWidget(self.man_rew_button)
         self.remotegroup_layout.addWidget(self.man_open_button)
         self.remotegroup_layout.addWidget(self.man_toggle_button)
+        self.remotegroup_layout.addWidget(self.man_stim_button)
         self.remote_groupbox.setLayout(self.remotegroup_layout)
 
         self.man_rew_button.clicked.connect(self.man_reward)
         self.man_open_button.clicked.connect(self.man_open)
         self.man_toggle_button.clicked.connect(self.man_toggle)
+        self.man_stim_button.clicked.connect(self.man_stim)
 
         #Sync broupbox
         self.sync_groupbox = QtWidgets.QGroupBox("Synchronous recording")
@@ -254,6 +257,10 @@ class Run_task_tab(QtWidgets.QWidget):
     def man_toggle(self):
         if self.board.framework_running:
             self.board.send_reward_msg_to_pyboard('t')
+
+    def man_stim(self):
+        if self.board.framework_running:
+            self.board.send_reward_msg_to_pyboard('s')
 
     def print_to_log(self, print_string, end="\n"):
         self.log_textbox.moveCursor(QtGui.QTextCursor.MoveOperation.End)
