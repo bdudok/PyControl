@@ -248,19 +248,19 @@ class Run_task_tab(QtWidgets.QWidget):
     #custom buttons
     def man_reward(self):
         if self.board.framework_running:
-            self.board.send_reward_msg_to_pyboard('r')
+            self.board.send_reward_msg_to_pyboard('manual_reward')
 
     def man_open(self):
         if self.board.framework_running:
-            self.board.send_reward_msg_to_pyboard('o')
+            self.board.send_reward_msg_to_pyboard('manual_open')
 
     def man_toggle(self):
         if self.board.framework_running:
-            self.board.send_reward_msg_to_pyboard('t')
+            self.board.send_reward_msg_to_pyboard('manual_toggle')
 
     def man_stim(self):
         if self.board.framework_running:
-            self.board.send_reward_msg_to_pyboard('s')
+            self.board.send_reward_msg_to_pyboard('manual_stim')
 
     def print_to_log(self, print_string, end="\n"):
         self.log_textbox.moveCursor(QtGui.QTextCursor.MoveOperation.End)
