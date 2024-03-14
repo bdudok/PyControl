@@ -4,41 +4,20 @@ from pyControl.utility import *
 from devices import *
 import gc
 
-'''
---------Days 1-7 config for increasing reward zone distance----------
-Progression: 10-8-6-4 zones per lap, increase difficulty every time the mouse has 200+ rewards in 10 minutes
-Revert to easier settings if the mouse is thirsty but can't find enough RZs.
-'''
-'''---------------------------------------------------- TASK CONFIG--------------------------------------------------'''
-n_zones = 4 #number of zones per lap
-rz_open_time = 10 #s
-rz_length = 20 #cm
-max_lick_per_zone = 50
-hidden_zones = False
-drop_size = 2 #microliters
-
-'''------------------------------------------------------END CONFIG--------------------------------------------------'''
-
-
-#calibration
 cm = 41.5 #quad/cm
 ul = 24 #ms/microliter
+n_zones = 10
 
-
-#task parameters
-v.reward_zone_open = rz_open_time*second #reward availability after RZ entry
-v.reward_zone_length = int(rz_length * cm)
-v.reward_duration = int(drop_size*ul)  # Time reward solenoid is open for. - calibrated to microliters
-v.max_lick_per_zone = max_lick_per_zone
-v.is_hidden = hidden_zones # if not hidden, reward always given on reward zone entry
-v.houselight = True # to turn on blue LED suring task
-
-#other settings
 v.reward_zone_distance = int(200/n_zones * cm) #distance between zones
+v.reward_zone_open = 60*second #reward availability after RZ entry
+v.reward_zone_length = int(10 * cm)
+v.reward_duration = int(2*ul)  # Time reward solenoid is open for. - calibrated to microliters
 v.poll_resolution = 1000*ms # Time to push events to the search state - mouse can't find new reward zone between polls
 v.force_lap_reset = int(220 * cm) #lap reset triggered if not reset tag
 v.manual_valve_open = 1*second
+v.max_lick_per_zone = 100
 v.verbose=1
+
 
 
 #init attributes for use within states:
@@ -56,9 +35,9 @@ board = Breakout_1_2() # Breakout board.
 # Instantiate hardware - would normally be in a seperate hardware definition file.
 
 # Running wheel must be plugged into port 1 of breakout board.
-belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', threshold=100,)
-                          # rising_event='started_running',
-                          # falling_event='stopped_running')
+belt_pos = Rotary_encoder(name='pos', sampling_rate=15, output='position', threshold=100,
+                          rising_event='started_running',
+                          falling_event='stopped_running')
 
 lick_port = Lickometer(board.port_2, debounce=50)
 
@@ -66,15 +45,10 @@ lick_port = Lickometer(board.port_2, debounce=50)
 # cp has no signal, use TIR pin instead
 lap_reset_tag = Digital_input(board.port_3.DIO_B, rising_event='RFID_TIR', falling_event=None, debounce=1000, pull='down')
 
-#led control and power
-led_power = Digital_output(pin=board.port_3.POW_B)
-# led_control = Digital_output(pin=board.port_3.POW_A)
-
 solenoid = lick_port.SOL_1 # Reward delivery solenoid.
 
 session_output = Digital_output(pin=board.BNC_1, )
-opto_stim_ttl = Digital_output(pin=board.DAC_1, )
-sync_output = Rsync(pin=board.BNC_2, mean_IPI=1000, event_name='rsync') #sync signnal
+# sync_output = Rsync(pin=board.BNC_2, mean_IPI=1000, event_name='rsync') #sync signnal
 # frame_trigger = Frame_trigger(pin=board.DAC_1, pulse_rate=30, name='frame_trigger')
 
 # States and events.
@@ -87,10 +61,8 @@ events = [
           'lick_1', #lick port
     'RFID_TIR', #RFID tag in range
     'poll_timer', 'reward_timer', #internal timers
-    'sol_on', 'sol_off', #for control
-    'manual_reward', 'manual_open', 'manual_toggle', #for gui controls
-    'manual_stim', #for optogenetics
-    'rsync', #'frame_trigger'#utility 'started_running', 'stopped_running',
+    'sol_on', 'sol_off', #for gui controls
+ 'started_running', 'stopped_running', 'rsync', #'frame_trigger'#utility
 ]
 
 initial_state = 'trial_start'
@@ -146,16 +118,9 @@ def set_reward():
 def run_start():
     belt_pos.record() # Start streaming wheel velocity to computer.
     session_output.pulse(10, duty_cycle=50, n_pulses=1) #start microscope
-    #start LED light
-    # led_control.pulse(100, duty_cycle=10, n_pulses=False)
-    if v.houselight:
-        led_power.on()
-
 
 def run_end():
     session_output.pulse(10, duty_cycle=50, n_pulses=1)  # stop microscope
-    led_power.off()
-    # led_control.off()
 
 # State behaviour functions.
 def trial_start(event):
@@ -168,19 +133,6 @@ def all_states(event):
         solenoid.on()
     elif event == 'sol_off':
         solenoid.off()
-    elif event == 'manual_reward':
-        set_timer('sol_off', 1 + v.reward_duration)
-        publish_event('sol_on')
-    elif event == 'manual_open':
-        set_timer('sol_off', 1 + v.manual_valve_open)
-        publish_event('sol_on')
-    elif event == 'manual_toggle':
-        if v.sol_toggle___:
-            publish_event('sol_on')
-        else:
-            publish_event('sol_off')
-    elif event == 'manual_stim':
-        opto_stim_ttl.pulse(10, duty_cycle=50, n_pulses=1)
 
 def searching(event):
     '''
@@ -202,8 +154,6 @@ def reward_zone_entry(event):
         v.lick_count___ = 0
         v.reward_zone_entry_time___ = get_current_time()
         v.reward_zone_lapsed___ = False
-        if not v.is_hidden:
-            set_timer('lick_1', 10*ms)
         set_timer('reward_timer', v.reward_zone_open)
     elif event == 'lick_1':
         goto_state('reward')
@@ -219,9 +169,14 @@ def reward_zone(event):
             close_reward_zone()
         elif get_current_time() > v.reward_zone_entry_time___ + v.reward_zone_open:
             close_reward_zone()
-        elif belt_pos.position > (v.next_reward + v.reward_zone_length): #abort if zone size passed
-            close_reward_zone()
     elif event == 'lick_1':
+        # print_variables()
+        if belt_pos.position > (v.next_reward + v.reward_zone_length): #abort if zone size passed
+            print('rz length reached')
+            disarm_timer('reward_timer')
+            goto_state('searching')
+        if get_current_time() > v.reward_zone_entry_time___ + v.reward_zone_open:
+            goto_state('searching')
         if not v.reward_zone_lapsed___:
             goto_state('reward')
         else:
@@ -247,7 +202,23 @@ def reward(event):
     else:
         if v.lick_count___ >= v.max_lick_per_zone:
             close_reward_zone()
-        elif get_current_time() > (v.reward_zone_entry_time___ + v.reward_zone_open):
+        elif get_current_time() > v.reward_zone_entry_time___ + v.reward_zone_open:
             close_reward_zone()
-        elif belt_pos.position > (v.next_reward + v.reward_zone_length):
-            close_reward_zone()
+
+
+#Gui functions
+def give_gui_comm(comm):
+    if comm == 114: #r
+        set_timer('sol_off', 1+v.reward_duration)
+        publish_event('sol_on')
+    elif comm == 111: #o
+        set_timer('sol_off', 1 + v.manual_valve_open)
+        publish_event('sol_on')
+    elif comm == 116: #t
+        v.sol_toggle___ = not v.sol_toggle___
+        if v.sol_toggle___:
+            publish_event('sol_on')
+        else:
+            publish_event('sol_off')
+    else:
+        print(comm)

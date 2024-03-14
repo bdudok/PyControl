@@ -5,15 +5,16 @@ from devices import *
 import gc
 
 '''
---------Days 1-7 config for increasing reward zone distance----------
-Progression: 10-8-6-4 zones per lap, increase difficulty every time the mouse has 200+ rewards in 10 minutes
+--------Days 8*14 config for increasing the number of laps the mouse runs in a session----------
+Progression: 4-2-1 zones per lap, 50-30-20-10 drops per zone. 
+increase difficulty only if mouse clearly understands that it has to run and find the next reward zone.
 Revert to easier settings if the mouse is thirsty but can't find enough RZs.
 '''
 '''---------------------------------------------------- TASK CONFIG--------------------------------------------------'''
 n_zones = 4 #number of zones per lap
-rz_open_time = 10 #s
+rz_open_time = 5 #s
 rz_length = 20 #cm
-max_lick_per_zone = 50
+max_lick_per_zone = 30
 hidden_zones = False
 drop_size = 2 #microliters
 
