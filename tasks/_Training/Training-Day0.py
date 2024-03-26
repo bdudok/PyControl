@@ -5,7 +5,7 @@ from devices import *
 import gc
 '''-----------------------------------------Day 0 config for "unlimited" rewards-------------------------------------'''
 '''---------------------------------------------------- TASK CONFIG--------------------------------------------------'''
-n_zones = 10 #number of zones per lap
+n_zones = 12 #number of zones per lap
 rz_open_time = 60 #s
 rz_length = 20 #cm
 max_lick_per_zone = 100
