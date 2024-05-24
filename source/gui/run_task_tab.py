@@ -43,9 +43,10 @@ class Run_task_tab(QtWidgets.QWidget):
         #zmq variables
         self.recorder_pollinterval = 1000
         port = self.parent().recorder_port
-        context = zmq.Context()
-        self.server = context.socket(zmq.REP)
-        self.server.bind(f"tcp://*:{port}")
+        if port is not None:
+            context = zmq.Context()
+            self.server = context.socket(zmq.REP)
+            self.server.bind(f"tcp://*:{port}")
         self.listening = False
         # Setup groupbox
 
@@ -158,7 +159,8 @@ class Run_task_tab(QtWidgets.QWidget):
         self.filename_label = QtWidgets.QLabel('Upload task before arming', )
 
         self.syncgroup_layout.addWidget(self.filename_label)
-        self.sync_groupbox.setLayout(self.syncgroup_layout)
+        if self.parent().recorder_port is not None:
+            self.sync_groupbox.setLayout(self.syncgroup_layout)
 
         # Session groupbox.
 

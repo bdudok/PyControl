@@ -228,7 +228,7 @@ class GUI_main(QtWidgets.QMainWindow):
 # --------------------------------------------------------------------------------
 
 
-def launch_GUI():
+def launch_GUI(recorder_port=None):
     """Launch the pyControl GUI."""
     app = QtWidgets.QApplication(sys.argv)
     app.setStyle("Fusion")
@@ -236,6 +236,6 @@ def launch_GUI():
     font = QtGui.QFont()
     font.setPixelSize(get_setting("GUI", "ui_font_size"))
     app.setFont(font)
-    gui_main = GUI_main(app)
+    gui_main = GUI_main(app, recorder_port=recorder_port)
     sys.excepthook = gui_main.excepthook
     sys.exit(app.exec())

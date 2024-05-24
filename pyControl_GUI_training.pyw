@@ -20,4 +20,4 @@ except Exception as e:
 
 # Launch the GUI.
 from source.gui.GUI_main import launch_GUI
-launch_GUI(recorder_port=5556)
+launch_GUI(recorder_port=None)
