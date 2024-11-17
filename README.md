@@ -12,3 +12,4 @@ Task configurations for integration with the Bruker setup (rsync signals, record
 random foraging task)
 
 Parts list and assembly instructions for the treadmill are available on request.
+<img width="468" alt="image" src="https://github.com/user-attachments/assets/503b3c4b-c150-4ace-aa5e-5d0ebec259d7">
