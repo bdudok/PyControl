@@ -5,7 +5,8 @@ from devices import *
 import gc
 
 '''---------------------------------------------------- STIM CONFIG--------------------------------------------------'''
-train_period = 10 #a stim train will be triggered in evey X sec #0 to never trigger.
+train_delay = 30 #a stim train will be triggered in evey X sec #0 to never trigger.
+train_count = 1
 
 '''---------------------------------------------------- TASK CONFIG--------------------------------------------------'''
 n_zones = 1  # number of zones per lap
@@ -28,7 +29,8 @@ v.reward_duration = int(drop_size * ul)  # Time reward solenoid is open for. - c
 v.max_lick_per_zone = max_lick_per_zone
 v.is_hidden = hidden_zones  # if not hidden, reward always given on reward zone entry
 v.houselight = True  # to turn on blue LED suring task
-v.train_period = train_period * second #photostim train interval
+v.train_period = train_delay * second #photostim train interval
+v.train_count = train_count
 
 # other settings
 v.reward_zone_distance = int(200 / n_zones * cm)  # distance between zones
@@ -182,10 +184,10 @@ def all_states(event):
             publish_event('sol_on')
         else:
             publish_event('sol_off')
-    # elif event == 'manual_stim':
-    #     opto_stim_ttl.pulse(10, duty_cycle=50, n_pulses=1)
+    elif event == 'manual_stim':
+        opto_stim_ttl.pulse(10, duty_cycle=50, n_pulses=1)
     elif event == 'photostim_train':
-        opto_stim_ttl.pulse(10, duty_cycle=10, n_pulses=1)
+        opto_stim_ttl.pulse(10, duty_cycle=50, n_pulses=1)
 
 
 def searching(event):
@@ -201,9 +203,11 @@ def searching(event):
         else:
             set_timer('poll_timer', v.poll_resolution, output_event=True)
         if v.train_period > 1:
-            if get_current_time() > v.last_stim_time___ + v.train_period:
-                v.last_stim_time___ = get_current_time()
-                publish_event('photostim_train')
+            if v.train_count:
+                if get_current_time() > v.last_stim_time___ + v.train_period:
+                    v.last_stim_time___ = get_current_time()
+                    publish_event('photostim_train')
+                    v.train_count -= 1
 
 
 
